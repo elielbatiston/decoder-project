@@ -1,0 +1,19 @@
+version: '3.2'
+
+services:
+  postgres-course:
+    image: postgres
+    container_name: pg-course
+    command: postgres -c 'max_connections=200'
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ead-course
+    ports:
+      - "15433:5432"
+    networks:
+      - decoder-network
+
+networks:
+  decoder-network:
+    external: true
