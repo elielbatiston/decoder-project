@@ -1,0 +1,19 @@
+version: '3.2'
+
+services:
+  postgres-notification:
+    image: postgres
+    container_name: pg-notification
+    command: postgres -c 'max_connections=200'
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ead-notification
+    ports:
+      - "15434:5432"
+    networks:
+      - decoder-network
+
+networks:
+  decoder-network:
+    external: true
