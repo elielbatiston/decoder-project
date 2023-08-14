@@ -1,6 +1,7 @@
 package com.ead.authuser.controller;
 
 import com.ead.authuser.dtos.UserDto;
+import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.models.UserModel;
 import com.ead.authuser.services.UserService;
 import com.ead.authuser.specifications.SpecificationTemplate;
@@ -37,9 +38,16 @@ public class UserController {
     public ResponseEntity<Page<UserModel>> getAllUsers(
         SpecificationTemplate.UserSpec spec,
         @PageableDefault(sort = "userId", direction = Sort.Direction.ASC)
-        final Pageable pageable
+        final Pageable pageable,
+        @RequestParam(required = false) UUID courseId
     ) {
-        Page<UserModel> model = service.findAll(spec, pageable);
+        Page<UserModel> model;
+        if (courseId != null) {
+            model = service.findAll(SpecificationTemplate.userCourseId(courseId).and(spec), pageable);
+        } else {
+            model = service.findAll(spec, pageable);
+        }
+
         if (!model.isEmpty()) {
             for (final UserModel user : model.toList()) {
                 user.add(linkTo(methodOn(UserController.class).getOneUser(user.getUserId())).withSelfRel());
@@ -92,15 +100,15 @@ public class UserController {
         if (model.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         } else {
-            var user = model.get();
-            user.setFullName(dto.getFullName());
-            user.setPhoneNumber(dto.getPhoneNumber());
-            user.setCpf(dto.getCpf());
-            user.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
-            service.save(user);
-            log.debug("PUT updateUser userModel saved {} ", model.toString());
-            log.info("User updated successfully userId {} ", user.getUserId());
-            return ResponseEntity.status(HttpStatus.OK).body(user);
+            var userModel = model.get();
+            userModel.setFullName(dto.getFullName());
+            userModel.setPhoneNumber(dto.getPhoneNumber());
+            userModel.setCpf(dto.getCpf());
+            userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
+            service.save(userModel);
+            log.debug("PUT updateUser userModel userId {} ", userModel.getUserId());
+            log.info("User updated successfully userId {} ", userModel.getUserId());
+            return ResponseEntity.status(HttpStatus.OK).body(userModel);
         }
     }
 
