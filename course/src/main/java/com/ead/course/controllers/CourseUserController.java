@@ -9,7 +9,6 @@ import com.ead.course.models.CourseUserModel;
 import com.ead.course.services.CourseService;
 import com.ead.course.services.CourseUserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -36,10 +35,14 @@ public class CourseUserController {
     private CourseUserService courseUserService;
 
     @GetMapping("/courses/{courseId}/users")
-    public ResponseEntity<Page<UserDto>> getAllUsersByCourse(
+    public ResponseEntity<Object> getAllUsersByCourse(
             @PageableDefault(sort = "userId", direction = Sort.Direction.ASC) final Pageable pageable,
             @PathVariable(value = "courseId") final UUID courseId
     ) {
+        final Optional<CourseModel> modelOptional = courseService.findById(courseId);
+        if (modelOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Course not found");
+        }
         return ResponseEntity.status(HttpStatus.OK).body(authUserClient.getAllUsersByCourse(courseId, pageable));
     }
 
@@ -72,5 +75,15 @@ public class CourseUserController {
                     .convertCourseUserModel(subscriptionDto.getUserId()));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(courseUserModel);
+    }
+    @DeleteMapping("/courses/users/{userId}")
+    public ResponseEntity<Object> deleteCourseUserByUser(
+        @PathVariable(value = "userId") UUID userId
+    ) {
+        if (!courseUserService.existsByUserId(userId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("CourseUser not found.");
+        }
+        courseUserService.deleteCourseUserByUser(userId);
+        return ResponseEntity.status(HttpStatus.OK).body("CourseUser deleted successfully.");
     }
 }

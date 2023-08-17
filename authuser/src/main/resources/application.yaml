@@ -1,7 +1,11 @@
 server:
   port: 8087
+  servlet:
+    context-path: '/ead-authuser/'
 
 spring:
+  application:
+    name: ead-authuser-service
   datasource:
     url: jdbc:postgresql://localhost:15432/ead-authuser
     username: root
@@ -29,4 +33,11 @@ logging:
 ead:
   api:
     url:
-      course: 'http://localhost:8082'
+      course: 'http://ead-course-service/ead-course'
+
+eureka:
+  client:
+    service-url:
+      default-zone: 'http://localhost:8761/eureka'
+  instance:
+    hostname: localhost
