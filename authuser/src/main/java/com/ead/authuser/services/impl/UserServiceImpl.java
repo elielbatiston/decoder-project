@@ -1,9 +1,10 @@
 package com.ead.authuser.services.impl;
 
 import com.ead.authuser.clients.CourseClient;
-import com.ead.authuser.models.UserCourseModel;
+import com.ead.authuser.dtos.UserEventDto;
+import com.ead.authuser.enums.ActionType;
 import com.ead.authuser.models.UserModel;
-import com.ead.authuser.repositories.UserCourseRepository;
+import com.ead.authuser.publishers.UserEventPublisher;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,10 +25,10 @@ public class UserServiceImpl implements UserService {
     private UserRepository repository;
 
     @Autowired
-    private UserCourseRepository userCourseRepository;
+    private CourseClient courseClient;
 
     @Autowired
-    private CourseClient courseClient;
+    private UserEventPublisher userEventPublisher;
 
     @Override
     public List<UserModel> findAll() {
@@ -40,21 +42,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delete(final UserModel userModel) {
-        boolean deleteUserCourseInCourse = false;
-        final List<UserCourseModel> userCourseModels = userCourseRepository.findAllUserCourseIntoUser(userModel.getUserId());
-        if (!userCourseModels.isEmpty()) {
-            userCourseRepository.deleteAll(userCourseModels);
-            deleteUserCourseInCourse = true;
-        }
         repository.delete(userModel);
-        if (deleteUserCourseInCourse) {
-            courseClient.deleteUserInCourse(userModel.getUserId());
-        }
     }
 
     @Override
-    public void save(final UserModel model) {
-        repository.save(model);
+    public UserModel save(final UserModel model) {
+        return repository.save(model);
     }
 
     @Override
@@ -70,5 +63,36 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<UserModel> findAll(final Specification<UserModel> spec, final Pageable pageable) {
         return repository.findAll(spec, pageable);
+    }
+
+    @Transactional
+    @Override
+    public UserModel saveUser(final UserModel userModel) {
+        final UserModel userModelSaved = save(userModel);
+        final UserEventDto dto = userModelSaved.convertToUserEventDto();
+        userEventPublisher.publishUserEvent(dto, ActionType.CREATE);
+        return userModelSaved;
+    }
+
+    @Transactional
+    @Override
+    public void deleteUser(final UserModel userModel) {
+        delete(userModel);
+        final UserEventDto dto = userModel.convertToUserEventDto();
+        userEventPublisher.publishUserEvent(dto, ActionType.DELETE);
+    }
+
+    @Transactional
+    @Override
+    public UserModel updateUser(final UserModel userModel) {
+        final UserModel userModelSaved = save(userModel);
+        final UserEventDto dto = userModelSaved.convertToUserEventDto();
+        userEventPublisher.publishUserEvent(dto, ActionType.UPDATE);
+        return userModelSaved;
+    }
+
+    @Override
+    public UserModel updatePassword(final UserModel userModel) {
+        return save(userModel);
     }
 }

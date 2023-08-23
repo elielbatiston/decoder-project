@@ -1,12 +1,10 @@
 package com.ead.course.services.impl;
 
-import com.ead.course.clients.AuthUserClient;
 import com.ead.course.models.CourseModel;
-import com.ead.course.models.CourseUserModel;
 import com.ead.course.models.LessonModel;
 import com.ead.course.models.ModuleModel;
+import com.ead.course.models.UserModel;
 import com.ead.course.repositories.CourseRepository;
-import com.ead.course.repositories.CourseUserRepository;
 import com.ead.course.repositories.LessonRepository;
 import com.ead.course.repositories.ModuleRepository;
 import com.ead.course.services.CourseService;
@@ -33,16 +31,9 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private LessonRepository lessonRepository;
 
-    @Autowired
-    private CourseUserRepository courseUserRepository;
-
-    @Autowired
-    private AuthUserClient authUserClient;
-
     @Transactional
     @Override
     public void delete(CourseModel courseModel) {
-        boolean deleteCourseUserInAuthUser = false;
         final List<ModuleModel> modules = moduleRepository.findAllModulesIntoCourse(courseModel.getCourseId());
         if (!modules.isEmpty()) {
             for (ModuleModel module: modules) {
@@ -53,15 +44,8 @@ public class CourseServiceImpl implements CourseService {
             }
             moduleRepository.deleteAll(modules);
         }
-        final List<CourseUserModel> courseUserModels = courseUserRepository.findAllCourseUserIntoCourse(courseModel.getCourseId());
-        if (!courseUserModels.isEmpty()) {
-            courseUserRepository.deleteAll(courseUserModels);
-            deleteCourseUserInAuthUser = true;
-        }
+        courseRepository.deleteCourseUserByCourse(courseModel.getCourseId());
         courseRepository.delete(courseModel);
-        if (deleteCourseUserInAuthUser) {
-            authUserClient.deleteCourseInAuthUser(courseModel.getCourseId());
-        }
     }
 
     @Override
@@ -77,5 +61,16 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public Page<CourseModel> findAll(Specification<CourseModel> spec, Pageable pageable) {
         return courseRepository.findAll(spec, pageable);
+    }
+
+    @Override
+    public boolean existsByCourseAndUser(final UUID courseId, final UUID userId) {
+        return courseRepository.existsByCourseAndUser(courseId, userId);
+    }
+
+    @Transactional
+    @Override
+    public void saveSubscriptionUserInCourse(final UUID courseId, final UUID userId) {
+        courseRepository.saveCourseUser(courseId, userId);
     }
 }

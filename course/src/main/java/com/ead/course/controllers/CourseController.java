@@ -17,12 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
-
-import javax.validation.Valid;
 
 @Log4j2
 @RestController
@@ -95,9 +94,12 @@ public class CourseController {
         final Pageable pageable,
         @RequestParam(required = false) UUID userId
     ) {
-        Page<CourseModel> model;
+        final Page<CourseModel> model;
         if (userId != null) {
-            model = service.findAll(SpecificationTemplate.courseUserId(userId).and(spec), pageable);
+            model = service.findAll(
+                SpecificationTemplate.courseUserId(userId).and(spec),
+                pageable
+            );
         } else {
             model = service.findAll(spec, pageable);
         }

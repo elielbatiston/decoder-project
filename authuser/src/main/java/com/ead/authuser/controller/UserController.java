@@ -1,7 +1,6 @@
 package com.ead.authuser.controller;
 
 import com.ead.authuser.dtos.UserDto;
-import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.models.UserModel;
 import com.ead.authuser.services.UserService;
 import com.ead.authuser.specifications.SpecificationTemplate;
@@ -17,13 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Log4j2
 @RestController
@@ -38,16 +37,9 @@ public class UserController {
     public ResponseEntity<Page<UserModel>> getAllUsers(
         SpecificationTemplate.UserSpec spec,
         @PageableDefault(sort = "userId", direction = Sort.Direction.ASC)
-        final Pageable pageable,
-        @RequestParam(required = false) UUID courseId
+        final Pageable pageable
     ) {
-        Page<UserModel> model;
-        if (courseId != null) {
-            model = service.findAll(SpecificationTemplate.userCourseId(courseId).and(spec), pageable);
-        } else {
-            model = service.findAll(spec, pageable);
-        }
-
+        final Page<UserModel> model = service.findAll(spec, pageable);
         if (!model.isEmpty()) {
             for (final UserModel user : model.toList()) {
                 user.add(linkTo(methodOn(UserController.class).getOneUser(user.getUserId())).withSelfRel());
@@ -79,7 +71,7 @@ public class UserController {
         if (model.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         } else {
-            service.delete(model.get());
+            service.deleteUser(model.get());
             log.debug("DELETE deleteUser userId saved {} ", userId);
             log.info("User deleted successfully userId {} ", userId);
             return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully");
@@ -105,7 +97,7 @@ public class UserController {
             userModel.setPhoneNumber(dto.getPhoneNumber());
             userModel.setCpf(dto.getCpf());
             userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
-            service.save(userModel);
+            service.updateUser(userModel);
             log.debug("PUT updateUser userModel userId {} ", userModel.getUserId());
             log.info("User updated successfully userId {} ", userModel.getUserId());
             return ResponseEntity.status(HttpStatus.OK).body(userModel);
@@ -133,7 +125,7 @@ public class UserController {
         } else {
             user.setPassword(dto.getPassword());
             user.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
-            service.save(user);
+            service.updatePassword(user);
             return ResponseEntity.status(HttpStatus.OK).body("Password updated successfully");
         }
     }
@@ -154,7 +146,7 @@ public class UserController {
             var user = model.get();
             user.setImageUrl(dto.getImageUrl());
             user.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
-            service.save(user);
+            service.updateUser(user);
             return ResponseEntity.status(HttpStatus.OK).body(user);
         }
     }
