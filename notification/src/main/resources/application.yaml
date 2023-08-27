@@ -1,20 +1,19 @@
 server:
-  port: 8082
+  port: 8084
   servlet:
-    context-path: '/ead-course/'
+    context-path: '/ead-notification/'
 
 spring:
   application:
-    name: ead-course-service
+    name: ead-notification-service
   config:
-    import: 'optional:configserver:'
-    #import: 'optional:configserver:' #caso o config server esteja indisponivel ele pega a local no application.yml
-  cloud:
-    config:
-      discovery:
-        serviceId: ead-config-server
+    import: 'configserver:'
+    cloud:
+      config:
+        discovery:
+          serviceId: ead-config-server
   datasource:
-    url: jdbc:postgresql://localhost:15433/ead-course
+    url: jdbc:postgresql://localhost:15434/ead-notification
     username: root
     password: root
   jpa:
@@ -40,16 +39,12 @@ logging:
     org.hibernate: INFO
 
 ead:
-  api:
-    url:
-      authuser: 'http://ead-authuser-service/ead-authuser'
   broker:
     exchange:
-      userEventExchange: ead.userevent
       notificationCommandExchange: ead.notificationcommand
     queue:
-      userEventQueue:
-        name: ead.userevent.ms.course
+      notificationCommandQueue:
+        name: ead.notificationcommand.ms.notification
     key:
       notificationCommandKey: ms.notification
 
@@ -60,3 +55,9 @@ management:
         include:
           - refresh
           - health
+eureka:
+  client:
+    service-url:
+      defaultZone: 'http://localhost:8761/eureka'
+  instance:
+    hostname: localhost

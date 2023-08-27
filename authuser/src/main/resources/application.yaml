@@ -1,48 +1,10 @@
-server:
-  port: 8087
-  servlet:
-    context-path: '/ead-authuser/'
-
 spring:
   application:
     name: ead-authuser-service
-  datasource:
-    url: jdbc:postgresql://localhost:15432/ead-authuser
-    username: root
-    password: root
-  jpa:
-    hibernate:
-      ddl-auto: update
-      dialect: org.hibernate.dialect.PostgreSQLDialect
-      jdbc:
-        lob.non-contextual-creation: true
-    properties:
-      hibernate:
-        show_sql: true
-  output:
-    ansi:
-      enabled: Always
-  rabbitmq:
-    addresses: amqps://fsmzjtwb:KoKshvgRAW3xOrwxtrsucsORBpCToe4E@toad.rmq.cloudamqp.com/fsmzjtwb
-
-logging:
-    level:
-      com.ead: TRACE
-      root: INFO
-      org.springframework.web: DEBUG
-      org.hibernate: INFO
-
-ead:
-  api:
-    url:
-      course: 'http://ead-course-service/ead-course'
-  broker:
-    exchange:
-      userEvent: ead.userevent
-
-eureka:
-  client:
-    service-url:
-      default-zone: 'http://localhost:8761/eureka'
-  instance:
-    hostname: localhost
+  config:
+    import: 'configserver:'
+    #import: 'optional:configserver:' #caso o config server esteja indisponivel ele pega a local no application.yml
+  cloud:
+    config:
+      discovery:
+        serviceId: ead-config-server
