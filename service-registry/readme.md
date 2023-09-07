@@ -1,0 +1,1 @@
+heroku create -a ead-serviceregistry-prod --remote heroky-prod
