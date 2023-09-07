@@ -9,6 +9,6 @@ import java.util.UUID;
 
 public interface NotificationService {
     NotificationModel saveNotification(NotificationModel model);
-    Page<NotificationModel> findAllNotifiationsByUser(UUID userId, Pageable pageable);
+    Page<NotificationModel> findAllNotificationsByUser(UUID userId, Pageable pageable);
     Optional<NotificationModel> findByNotificationIdAndUserId(UUID notificationId, UUID userId);
 }

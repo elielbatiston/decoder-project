@@ -1,19 +1,32 @@
 package com.ead.authuser.controller;
 
+import com.ead.authuser.configs.security.JwtProvider;
+import com.ead.authuser.dtos.JwtDto;
+import com.ead.authuser.dtos.LoginDto;
 import com.ead.authuser.dtos.UserDto;
+import com.ead.authuser.enums.RoleType;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
+import com.ead.authuser.models.RoleModel;
 import com.ead.authuser.models.UserModel;
+import com.ead.authuser.services.RoleService;
 import com.ead.authuser.services.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.netflix.discovery.converters.Auto;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -26,7 +39,19 @@ public class AuthenticationController {
     //private final Logger logger = LogManager.getLogger(AuthenticationController.class);
 
     @Autowired
-    private UserService service;
+    private UserService userService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtProvider jwtProvider;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @PostMapping("signup")
     public ResponseEntity<Object> registerUser(
@@ -36,24 +61,38 @@ public class AuthenticationController {
         UserDto dto
     ) {
         log.debug("POST registerUser userDto received {} ", dto.toString());
-        if (service.existsByUsername(dto.getUserName())) {
+        if (userService.existsByUsername(dto.getUserName())) {
             log.warn("Username {} is already taken", dto.toString());
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Username is already taken!");
         }
-        if (service.existsByEmail(dto.getEmail())) {
+        if (userService.existsByEmail(dto.getEmail())) {
             log.warn("Email {} is already taken", dto.toString());
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: E-mail is already taken!");
         }
+        dto.setPassword(passwordEncoder.encode(dto.getPassword()));
+        final RoleModel roleModel = roleService.findByRoleName(RoleType.ROLE_STUDENT)
+                .orElseThrow(() -> new RuntimeException("Error: Role is Not Found."));
         var model = new UserModel();
         BeanUtils.copyProperties(dto, model);
         model.setUserStatus(UserStatus.ACTIVE);
         model.setUserType(UserType.STUDENT);
         model.setCreationDate(LocalDateTime.now(ZoneId.of("UTC")));
         model.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
-        service.saveUser(model);
+        model.getRoles().add(roleModel);
+        userService.saveUser(model);
         log.debug("POST registerUser userId saved {} ", model.getUserId());
         log.info("User saved successfully userId {} ", model.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(model);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<JwtDto> authenticateUser(@Valid @RequestBody LoginDto loginDto) {
+        final Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword())
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        final String jwt = jwtProvider.generateJwt(authentication);
+        return ResponseEntity.ok(new JwtDto(jwt));
     }
 
     @GetMapping

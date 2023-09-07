@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -32,6 +33,7 @@ public class LessonController {
     @Autowired
     private LessonService lessonService;
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PostMapping("modules/{moduleId}/lessons")
     public ResponseEntity<Object> saveLesson(
         @PathVariable(value="moduleId")
@@ -50,6 +52,7 @@ public class LessonController {
         return ResponseEntity.status(HttpStatus.CREATED).body(lessonService.save(model));
     }
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @DeleteMapping("modules/{moduleId}/lessons/{lessonId}")
     public ResponseEntity<Object> deleteLesson(
         @PathVariable(value="moduleId") final UUID moduleId,
@@ -63,6 +66,7 @@ public class LessonController {
         return ResponseEntity.status(HttpStatus.OK).body("Lesson deleted successfully");
     }
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     @PutMapping("modules/{moduleId}/lessons/{lessonId}")
     public ResponseEntity<Object> updateLesson(
         @PathVariable(value="moduleId") final UUID moduleId,
@@ -80,6 +84,7 @@ public class LessonController {
         return ResponseEntity.status(HttpStatus.OK).body(lessonService.save(model));
     }
 
+    @PreAuthorize("hasAnyRole('STUDENT')")
     @GetMapping("modules/{moduleId}/lessons")
     public ResponseEntity<Page<LessonModel>> getAllLessons(
         @PathVariable(value="moduleId")
@@ -93,6 +98,7 @@ public class LessonController {
         );
     }
 
+    @PreAuthorize("hasAnyRole('STUDENT')")
     @GetMapping("modules/{moduleId}/lessons/{lessonId}")
     public ResponseEntity<Object> getOneLesson(
         @PathVariable(value="moduleId") final UUID moduleId,

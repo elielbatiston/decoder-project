@@ -12,6 +12,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -38,29 +40,30 @@ public class CourseClient {
 //    @Retry(name = "retryInstance", fallbackMethod = "retryFallback")
 //    @CircuitBreaker(name = "circuitbreakInstance", fallbackMethod = "circuitbreakerfallback")
     @CircuitBreaker(name = "circuitbreakInstance")
-    public Page<CourseDto> getAllCoursesByUser(final UUID userId, final Pageable pageable) {
+    public Page<CourseDto> getAllCoursesByUser(
+        final UUID userId,
+        final Pageable pageable,
+        final String token
+    ) {
         List<CourseDto> searchResult;
         ResponseEntity<ResponsePageDto<CourseDto>> result = null;
         final String url = REQUEST_URI_COURSE + utilsService.createUrl(userId, pageable);
-
+        final HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+        final HttpEntity<String> requestEntity = new HttpEntity<>("parameters", headers);
         log.debug("Request URL: {} ", url);
         log.info("Request URL: {} ", url);
         System.out.println("------ Start Request ao Course MicroService -------- ");
-        try {
-            ParameterizedTypeReference<ResponsePageDto<CourseDto>> responseType =
-                    new ParameterizedTypeReference<ResponsePageDto<CourseDto>>() {};
-            result = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                responseType
-            );
-            searchResult = result.getBody().getContent();
-
-            log.debug("Response Number of Elements: {} ", searchResult.size());
-        } catch (HttpStatusCodeException e) {
-            log.error("Error request /courses {} ", e);
-        }
+        ParameterizedTypeReference<ResponsePageDto<CourseDto>> responseType =
+                new ParameterizedTypeReference<ResponsePageDto<CourseDto>>() {};
+        result = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            requestEntity,
+            responseType
+        );
+        searchResult = result.getBody().getContent();
+        log.debug("Response Number of Elements: {} ", searchResult.size());
         log.info("Ending request /courses userId {} ", userId);
         return result.getBody();
     }

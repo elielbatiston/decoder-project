@@ -26,7 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public Page<NotificationModel> findAllNotifiationsByUser(final UUID userId, final Pageable pageable) {
+    public Page<NotificationModel> findAllNotificationsByUser(final UUID userId, final Pageable pageable) {
         return repository.findAllByUserIdAndNotificationStatus(userId, NotificationStatus.CREATED, pageable);
     }
 
