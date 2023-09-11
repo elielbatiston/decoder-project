@@ -1,0 +1,10 @@
+spring:
+  config:
+    import: 'configserver:'
+    #import: 'optional:configserver:' #caso o config server esteja indisponivel ele pega a local no application.yml
+  cloud:
+    config:
+      discovery:
+        serviceId: ead-config-server
+      username: admin
+      password: 'admin'

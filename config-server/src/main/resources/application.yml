@@ -1,29 +1,5 @@
-server:
-  port: 8888
-
 spring:
+  profiles:
+    active: prod
   application:
     name: ead-config-server
-  cloud:
-    config:
-      server:
-        git:
-          uri: "https://github.com/elielbatiston/ead-config-server-repo"
-          default-label: main
-#          username:
-#          password:
-
-ead:
-  serviceRegistry:
-    username: admin
-    password: 'admin'
-  configServer:
-    username: admin
-    password: 'admin'
-
-eureka:
-  client:
-    service-url:
-      defaultZone: 'http://${ead.serviceRegistry.username}:${ead.serviceRegistry.password}@localhost:8761/eureka'
-    instance:
-      hostname: localhost
